@@ -1,0 +1,131 @@
+{% comment %}
+    Render each of the products that were added to the
+    cart. It has actions to delete, add from the shopping cart.
+
+    Accepts:
+    - product: {Object} Product
+    - options: {Array} Array of the product's options
+    - variant: {String} Product variant
+    - quantity: {Number} Quantity of the line item
+    - price: {String} Original price
+    - variant_id: {Number} Variant ID
+
+    Usage:
+    {% render 'cart-product', title: item.product.title %}
+{% endcomment %}
+
+<article class="cart-product js-cart-product" data-product-id="{{ product.id }}">
+  <figure class="cart-product__image">
+    {% liquid
+      assign mobile_images = product.metafields.product_information.images_for_mobile_devices | split: ','
+      assign first_mobile_image_data = mobile_images[0] | split: '|'
+      assign first_mobile_image = first_mobile_image_data[0]
+      assign first_mobile_image_alt = first_mobile_image_data[1]
+    %}
+    <img
+      src="{{ first_mobile_image }}"
+      alt="{{ first_mobile_image_alt }}"
+      title="{{ first_mobile_image_alt }}"
+      width="245"
+      height="auto"
+      loading="lazy"
+    />
+  </figure>
+  <div class="cart-product__details">
+    <p class="cart-product__title">{{ product.title }}</p>
+    <span>
+      {%- if product.has_only_default_variant == false -%}
+        {%- for option in options -%}
+          <span class="cart-product__variant js-product-variant-{{ product.id }}">
+            {{ option.name }} {{ option.value }}{% if product.type == "Pack" %} -{% endif %}
+          </span>
+        {%- endfor -%}
+        {%- comment -%}
+          If the product is a pack, their products
+          will be found to show them in the product
+          details.
+        {%- endcomment -%}
+        {% if product.type == "Pack" %}
+          {% for tag in product.tags %}
+            {% if tag contains 'pack|' %}
+              {% liquid
+                assign pack_name = tag | remove: 'pack|'
+              %}
+              {% case pack_name %}
+                {% when 'decouverte' %}
+                  {% liquid
+                    assign la_mousse = product.metafields.product_information.product_la_mousse.value
+                    assign les_wipes = product.metafields.product_information.product_les_wipes.value
+                  %}
+                  <span class="cart-product__variant">
+                    {{ la_mousse.title }} - {{ les_wipes.title }}
+                  </span>
+                {% when 'duo' %}
+                  {% liquid
+                    assign la_mousse = product.metafields.product_information.product_la_mousse.value
+                  %}
+                  <span class="cart-product__variant">
+                    {{ la_mousse.title }}
+                  </span>
+              {% endcase %}
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+      {% else %}
+        {% if product.type == "Pack" %}
+          {% for tag in product.tags %}
+            {% if tag contains 'pack|' %}
+              {% liquid
+                assign pack_name = tag | remove: 'pack|'
+              %}
+              {% if pack_name == "selfcare" %}
+                {% liquid
+                  assign la_mousse = product.metafields.product_information.product_la_mousse.value
+                  assign les_wipes = product.metafields.product_information.product_les_wipes.value
+                  assign roll_on = product.metafields.product_information.product_le_roll_on.value
+                %}
+                {{ la_mousse.title }} - {{ les_wipes.title }} - {{ roll_on.title }}
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+      {%- endif -%}
+    </span>
+    <div
+      class="cart-product__quantity"
+    >
+      <span>{{ 'products.product.quantity.label' | t }}</span>
+      <div
+        class="cart-product__quantity-controls"
+        data-quantity="{{ quantity }}"
+        data-variant-id="{{ variant_id }}"
+        data-product-type="{{ product.type }}"
+      >
+        <button
+          class="cart-product__icon icon-remove js-decrease-product-quantity"
+          type="button"
+          aria-label="{{ 'products.product.quantity.decrease' | t: product: product.title | escape }}"
+          title="{{ 'products.product.quantity.decrease' | t: product: product.title | escape }}"
+        ></button>
+        <span>{{ quantity }}</span>
+        <button
+          class="cart-product__icon icon-plus js-increase-product-quantity"
+          type="button"
+          aria-label="{{ 'products.product.quantity.increase' | t: product: product.title | escape }}"
+          title="{{ 'products.product.quantity.increase' | t: product: product.title | escape }}"
+        ></button>
+      </div>
+    </div>
+  </div>
+  <div class="cart-product__remove-container">
+    <button
+      class="cart-product__icon cart-product__icon--big icon-delete js-product-remove-button"
+      type="button"
+      aria-label="{{ 'products.product.quantity.delete' | t: product: product.title | escape }}"
+      title="{{ 'products.product.quantity.delete' | t: product: product.title | escape }}"
+      data-variant-id="{{ variant_id }}"
+      data-product-type="{{ product.type }}"
+    ></button>
+    <span class="cart-product__price">{{ price | money }}</span>
+  </div>
+</article>

@@ -1,0 +1,130 @@
+<div class="side-cart__body-container{% if cart.item_count == 0 %} isEmpty{% endif %}">
+  <div class="side-cart__body">
+    <div
+      class="side-cart__products-in-cart"
+      data-cart-items="{{ cart.item_count }}"
+      data-suggested-product-quantity="{{ section.settings.suggested_product_quantity }}"
+      id="productsInCart"
+    >
+      {% if cart.item_count > 0 %}
+        {% for item in cart.items %}
+          {% if item.product.type != "false" %}
+            {% render 'cart-product',
+              product: item.product,
+              options: item.options_with_values,
+              variant: item.variant.title,
+              quantity: item.quantity,
+              price: item.original_price,
+              variant_id: item.variant.id,
+            %}
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        <div class="empty-side-cart">
+          <p class="empty-side-cart__title">
+            {{ 'sections.cart.empty' | t }}
+          </p>
+          <figure class="empty-side-cart__image">
+            <img
+              src="{{ section.settings.image_of_empty_state.src | img_url: '410x' }}"
+              srcset="{{ section.settings.image_of_empty_state.src | img_url: '410x' }} 1x, {{ section.settings.image_of_empty_state.src | img_url: '410x', scale: 2 }} 2x"
+              alt="{{ section.settings.image_of_empty_state.alt }}"
+              title="{{ section.settings.image_of_empty_state.alt }}"
+              width="410"
+              height="auto"
+              loading="lazy"
+            />
+          </figure>
+        </div>
+      {% endif %}
+    </div>
+    <div class="side-cart__upsell" id="sideCartUpsell">
+      <p class="side-cart__subtitle">
+        {{ 'sections.cart.upsell_section_title' | t }}
+      </p>
+      <div class="side-cart__slider slider-arrows js-upsell-slider">
+        {% if cart.item_count == 0 %}
+          {% assign best_sellers = collections['bestsellers'] %}
+          {% for product in best_sellers.products %}
+          {% liquid
+            assign mobile_images = product.metafields.product_information.images_for_mobile_devices | split: ','
+            assign first_mobile_image = mobile_images[0] | split: '|' | first
+            assign first_mobile_image_alt = mobile_images[0] | split: '|' | last
+          %}
+            {% render 'suggested-product-card',
+              image: first_mobile_image,
+              alt: first_mobile_image_alt,
+              product: product,
+            %}
+          {% endfor %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+<div class="side-cart__footer">
+  {% if cart.item_count > 0 %}
+    {% render 'free-shipping-bar',
+      progress_message: section.settings.progress_message,
+      goal_achieved_message: section.settings.goal_achieved_message,
+      objective: section.settings.free_shipping_goal,
+      total_cart_price: cart.total_price
+    %}
+    <button
+      class="side-cart__button"
+      type="button"
+      id="sideCartButton"
+    >
+      {{ 'sections.cart.checkout' | t }}{{ cart.total_price | money }}
+    </button>
+  {% endif %}
+</div>
+
+{% schema %}
+  {
+    "name": "Side cart",
+    "settings": [
+      {
+        "type": "header",
+        "content": "Cart"
+      },
+      {
+        "type": "image_picker",
+        "id": "image_of_empty_state",
+        "label": "Image for empty cart",
+        "info": "Select the image that should appear when the cart is empty"
+      },
+      {
+        "type": "header",
+        "content": "Upsell"
+      },
+      {
+        "type": "number",
+        "id": "suggested_product_quantity",
+        "label": "Suggested product quantity",
+        "info": "Indicate the number of suggested products that you want to get from the Shopify API and that should be displayed in the side cart"
+      },
+      {
+        "type": "header",
+        "content": "Free shipping bar"
+      },
+      {
+        "type": "number",
+        "id": "free_shipping_goal",
+        "label": "Free shipping goal"
+      },
+      {
+        "type": "text",
+        "id": "progress_message",
+        "label": "Progress message",
+        "info": "use [value] to separate the paragraph that will be displayed when the purchase value is less than the goal."
+      },
+      {
+        "type": "text",
+        "id": "goal_achieved_message",
+        "label": "Goal achieved message",
+        "info": "It will be shown when the purchase value is higher than the goal"
+      }
+    ]
+  }
+{% endschema %}
